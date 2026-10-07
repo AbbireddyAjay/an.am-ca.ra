@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A little surprise 💌</title>
+<style>
+:root{--bg:#fff1f5;--card:#fff;--ink:#3b1f2b;--pink:#ff4d8d;--soft:#ffd6e5;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d1117;--card:#2a1822;--ink:#ffe8f0;--soft:#4a2638}}
+:root[data-theme="dark"]{--bg:#1d1117;--card:#2a1822;--ink:#ffe8f0;--soft:#4a2638}
+*{box-sizing:border-box}
+html,body{min-height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;align-items:center;justify-content:center;padding:16px;overflow-x:hidden;min-height:100vh}
+.card{background:var(--card);border-radius:24px;padding:28px 22px;width:100%;max-width:440px;text-align:center;box-shadow:0 10px 40px rgba(255,77,141,.25);position:relative;min-height:340px;display:flex;flex-direction:column;justify-content:center}
+.bar{height:6px;background:var(--soft);border-radius:9px;margin-bottom:22px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--pink);transition:width .4s}
+h1{font-size:1.5rem;margin:.2em 0 .6em;line-height:1.3}
+p{margin:.3em 0 1em;opacity:.8}
+.emoji{font-size:3rem}
+button{font:inherit;border:0;border-radius:14px;padding:12px 22px;cursor:pointer;transition:transform .15s}
+.yes{background:var(--pink);color:#fff;font-weight:700}
+.no{background:var(--soft);color:var(--ink)}
+.row{display:flex;gap:14px;justify-content:center;align-items:center;min-height:90px;flex-wrap:wrap}
+.nums{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.nums button{background:var(--soft);color:var(--ink);padding:14px 0;font-weight:700}
+.nums button.ten{background:var(--pink);color:#fff}
+.msg{min-height:1.5em;font-size:.95rem;color:var(--pink);margin-top:12px;font-weight:600}
+.shake{animation:sh .4s}
+@keyframes sh{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.polaroid{background:#fff;padding:12px 12px 18px;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.3);transform:rotate(-3deg);margin:10px auto 18px;max-width:300px;animation:pop .8s}
+.polaroid img{width:100%;display:block;border-radius:3px}
+.ph{aspect-ratio:1;background:var(--soft);display:flex;align-items:center;justify-content:center;color:#3b1f2b;padding:12px;font-size:.9rem}
+.polaroid .cap{color:#3b1f2b;font-family:cursive;margin-top:10px}
+@keyframes pop{from{transform:scale(.2) rotate(20deg);opacity:0}}
+.show{margin-top:8px;text-align:left}
+.show h2{text-align:center;font-size:1.1rem;margin:6px 0 12px}
+.slides{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;scrollbar-width:none;border-radius:14px}
+.slides::-webkit-scrollbar{display:none}
+.slide{flex:0 0 100%;scroll-snap-align:center;background:var(--soft);border-radius:14px;overflow:hidden;position:relative}
+.slide img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block}
+.slide .cap{position:absolute;left:0;right:0;bottom:0;padding:26px 12px 10px;background:linear-gradient(transparent,rgba(0,0,0,.65));color:#fff;text-align:center;font-weight:600}
+.slide .ph{aspect-ratio:4/5}
+.dots{display:flex;gap:6px;justify-content:center;margin-top:10px}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--soft)}
+.dots i.on{background:var(--pink)}
+canvas{position:fixed;inset:0;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="card" id="card"></div>
+<div id="yt" style="position:fixed;left:-9999px;width:1px;height:1px;opacity:0"></div>
+<button id="mu" style="display:none;position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:12px;z-index:5;background:var(--card);color:var(--ink);border-radius:50%;width:44px;height:44px;padding:0;box-shadow:0 2px 10px rgba(0,0,0,.2)">🔊</button>
+<canvas id="fx"></canvas>
+<script>
+// ====== EDIT THESE ======
+// SLIDESHOW: put your 5 images in the same folder as this file (e.g. photo1.jpg ... photo5.jpg)
+// or paste full links. Change the file names below to match your images.
+const SLIDES = [
+  {src:"WhatsApp Image 2026-10-07 at 12.58.02 PM.jpeg", cap:"The day we met 💕"},
+  {src:"photo1.jpg.jpeg",cap :"The best trip ✈️"},
+  {src:"photo2.jpg.jpeg", cap:"pretiest one 😂"},
+  {src:"photo4.jpg.jpeg", cap:"My favourite memory 🌸"},
+  {src:"photo5.jpg.jpeg", cap:"To many more! 💖"}
+];
+// MUSIC: paste the YouTube video ID (the part after v= in the link). Example: youtube.com/watch?v=ABC123xyz -> "ABC123xyz"
+const YT_ID = "YOUR_VIDEO_ID";
+const SLIDESHOW_TITLE = "Some of my favourite moments with you";
+const FRIEND = "Friend";            // her name
+const ME = "Me";                    // your name
+const PHOTO = "photo2.jpg.jpeg";           // main reveal photo (file name next to this html, or a link)
+const FINAL_TEXT = "Best friend award goes to you 💖";
+const steps = [
+  {t:"intro"},
+  {t:"yes", q:"Are you ready for a surprise?", e:"🎁", nos:["Wrong button 😏","Try again!","Nope, not allowed","You mean YES 😄"]},
+  {t:"yes", q:"Do you agree that I'm an amazing friend?", e:"😎", nos:["Hmm, that's not it","Think again 🤨","Button is shy 🙈","Excuse me?!"]},
+  {t:"quote", q:"Some people make ordinary days feel like little celebrations. You're one of them.", e:"🌸"},
+  {t:"rate", q:"Rate my sense of humour out of 10", e:"😂"},
+  {t:"yes", q:"Do you admit you'd be bored without me?", e:"😏", nos:["Lies!","Be honest 👀","Not a valid answer","The truth hurts 😌"]},
+  {t:"rate", q:"How good a listener am I?", e:"👂"},
+  {t:"quote", q:"You're the person I want to tell first, whether the news is great or terrible.", e:"💬"},
+  {t:"yes", q:"Will you keep being my partner in crime?", e:"🕶️", nos:["Denied!","Not an option","Nice try","Pls 🥺"]},
+  {t:"yes", q:"Do you know you're one of the best things in my life?", e:"💗", nos:["Say it again 🥹","Wrong again!","The button disagrees","Aww, no 😭"]},
+  {t:"rate", q:"How lucky am I to have you as a friend?", e:"🍀"},
+  {t:"quote", q:"With you I never have to pretend. You make me feel like the best version of myself.", e:"✨"},
+  {t:"yes", q:"Promise to hug me when you see the surprise?", e:"🤗", nos:["Coward!","Hug required","No escape 😄","Sorry, wrong one"]},
+  {t:"rate", q:"How excited are you to see the surprise?", e:"🤩"},
+  {t:"quote", q:"Distance, time, busy lives: none of it changes what you mean to me. Thank you for being you.", e:"💞"},
+  {t:"outro"}
+];
+// ========================
+const card=document.getElementById('card');let i=0;
+const bar=()=>`<div class="bar"><i style="width:${i/(steps.length-1)*100}%"></i></div>`;
+function next(){i++;render()}
+function render(){
+  const s=steps[i];
+  if(s.t==="intro"){card.innerHTML=`<div class="emoji">💌</div><h1>Hey ${FRIEND}!</h1><p>I made something just for you. Answer a few quick questions to unlock it.</p><div class="row"><button class="yes" id="go">Let's go</button></div>`;go.onclick=()=>{startMusic();next()}}
+  else if(s.t==="yes"){
+    card.innerHTML=bar()+`<div class="emoji">${s.e}</div><h1>${s.q}</h1><div class="row"><button class="yes" id="y">Yes 💖</button><button class="no" id="n">No</button></div><div class="msg" id="m"></div>`;
+    let c=0;const y=document.getElementById('y'),n=document.getElementById('n'),m=document.getElementById('m');
+    y.onclick=next;
+    const flee=e=>{e.preventDefault();m.textContent=s.nos[c%s.nos.length];c++;
+      n.style.transform=`translate(${(Math.random()-.5)*180}px,${(Math.random()-.5)*90}px) scale(${Math.max(.4,1-c*.1)})`;
+      y.style.transform=`scale(${Math.min(1.6,1+c*.12)})`;};
+    n.addEventListener('mouseenter',flee);n.addEventListener('touchstart',flee,{passive:false});n.addEventListener('click',flee);
+  }
+  else if(s.t==="quote"){
+    card.innerHTML=bar()+`<div class="emoji">${s.e}</div><h1 style="font-style:italic;font-weight:600">“${s.q}”</h1><div class="row" style="min-height:60px"><button class="yes" id="c">Aww, continue 💖</button></div>`;c.onclick=next}
+  else if(s.t==="rate"){
+    const lines=["Haha, funny. Try again 😏","That's an insult 😤","Is that your final answer?","Higher, higher!","Nope, my ego needs more","Closer... but no 😌"];
+    card.innerHTML=bar()+`<div class="emoji">${s.e}</div><h1>${s.q}</h1><div class="nums">${[1,2,3,4,5,6,7,8,9,10].map(k=>`<button data-k="${k}" class="${k==10?'ten':''}">${k}</button>`).join('')}</div><div class="msg" id="m"></div>`;
+    const m=document.getElementById('m');let c=0;
+    card.querySelectorAll('.nums button').forEach(b=>b.onclick=()=>{
+      if(+b.dataset.k===10){m.textContent="Correct answer 😎";setTimeout(next,500)}
+      else{m.textContent=lines[c++%lines.length];b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake');b.style.opacity=.35}
+    });
+  }
+  else{
+    const photo=PHOTO?`<img src="${PHOTO}" alt="Us" onerror="this.outerHTML='<div class=ph>📸 Add main.jpg</div>'">`:`<div class="ph">📸 Your photo goes here</div>`;
+    card.innerHTML=`<h1>Surprise! 🎉</h1><div class="polaroid">${photo}<div class="cap">${FRIEND} + ${ME}</div></div><p>${FINAL_TEXT}</p>
+    <div class="show"><h2>${SLIDESHOW_TITLE}</h2><div class="slides" id="sl">${SLIDES.map((x,k)=>`<div class="slide"><img src="${x.src}" alt="" onerror="this.outerHTML='<div class=\\'ph\\'>📸 Add ${x.src}</div>'"><div class="cap">${x.cap}</div></div>`).join('')}</div><div class="dots" id="dt">${SLIDES.map((_,k)=>`<i class="${k?'':'on'}"></i>`).join('')}</div></div>`;
+    confetti();startShow();
+  }
+}
+let ytp,playing=true;
+function startMusic(){
+  if(!YT_ID||YT_ID==="YOUR_VIDEO_ID")return;
+  const t=document.createElement('script');t.src="https://www.youtube.com/iframe_api";document.head.appendChild(t);
+  window.onYouTubeIframeAPIReady=()=>{ytp=new YT.Player('yt',{height:'1',width:'1',videoId:YT_ID,playerVars:{autoplay:1,loop:1,playlist:YT_ID,playsinline:1},events:{onReady:e=>{e.target.setVolume(60);e.target.playVideo();mu.style.display='block'}}})};
+  mu.onclick=()=>{playing=!playing;playing?ytp.playVideo():ytp.pauseVideo();mu.textContent=playing?'🔊':'🔇'};
+}
+function startShow(){
+  const sl=document.getElementById('sl'),d=[...document.querySelectorAll('#dt i')];let k=0,paused=false;
+  sl.addEventListener('scroll',()=>{const n=Math.round(sl.scrollLeft/sl.clientWidth);d.forEach((e,j)=>e.classList.toggle('on',j===n));k=n});
+  ['touchstart','mousedown','wheel'].forEach(ev=>sl.addEventListener(ev,()=>{paused=true;setTimeout(()=>paused=false,6000)},{passive:true}));
+  setInterval(()=>{if(paused)return;k=(k+1)%SLIDES.length;sl.scrollTo({left:k*sl.clientWidth,behavior:'smooth'})},3000);
+}
+function confetti(){
+  const cv=document.getElementById('fx'),x=cv.getContext('2d');cv.width=innerWidth;cv.height=innerHeight;
+  const em=["💖","🎉","✨","💕","🎈"];
+  const ps=Array.from({length:70},()=>({x:Math.random()*cv.width,y:-Math.random()*cv.height,v:2+Math.random()*3,e:em[Math.random()*5|0],s:16+Math.random()*16}));
+  (function f(){x.clearRect(0,0,cv.width,cv.height);ps.forEach(p=>{p.y+=p.v;if(p.y>cv.height+30)p.y=-30;x.font=p.s+"px serif";x.fillText(p.e,p.x,p.y)});requestAnimationFrame(f)})();
+}
+render();
+</script>
+</body>
+</html>
